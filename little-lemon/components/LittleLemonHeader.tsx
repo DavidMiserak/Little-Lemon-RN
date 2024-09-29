@@ -7,7 +7,12 @@ import {
 const LittleLemonHeader = () => {
   return (
     <View style={styles.container}>
-      <Image style={styles.logo} source={require('../images/logo.png')} />
+      <Image
+        alt="Little Lemon Logo"
+        style={styles.logo}
+        source={require('../assets/images/logo.png')}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -23,7 +28,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 250,
     height: 50,
-    resizeMode: 'contain',
     alignSelf: 'center',
   },
 });

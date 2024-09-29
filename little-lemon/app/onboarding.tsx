@@ -10,12 +10,12 @@ import {
   View,
 } from 'react-native';
 
-const validateEmail = (email) => {
+const validateEmail = (email: string) => {
   const re = /\S+@\S+\.\S+/;
   return re.test(email);
 };
 
-const OnboardingScreen = () => {
+const Onboarding = () => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [isNameValid, setIsNameValid] = useState(false);
@@ -50,7 +50,7 @@ const OnboardingScreen = () => {
               setEmail(text);
               setIsEmailValid(validateEmail(text));
             }}
-            keyboardType="email-address"
+            inputMode="email"
           />
         </View>
         <View style={styles.buttonArea}>
@@ -67,7 +67,7 @@ const OnboardingScreen = () => {
   );
 }
 
-export default OnboardingScreen;
+export default Onboarding;
 
 const styles = StyleSheet.create({
   container: {

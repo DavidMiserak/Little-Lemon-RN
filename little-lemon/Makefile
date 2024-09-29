@@ -1,20 +1,17 @@
 RUNTIME=docker
-IMAGE=little-lemon-restaurant
+IMAGE=expo-react-native-runner
 TAG=latest
 IMAGE_NAME=$(IMAGE):$(TAG)
 
 .PHONY: run
 run:
-	yarn install
-	export NODE_OPTIONS=--openssl-legacy-provider && npx expo start
+	bun install
+	npx expo start
 
 .PHONY: run-container
 run-container: build-image
 	$(RUNTIME) run -it --rm \
-		-p 19000:19000 \
-		-p 19001:19001 \
-		-p 19002:19002 \
-		-p 19006:19006 \
+		-p 8081:8081 \
 		--user $(shell id -u):$(shell id -g) \
 		$(IMAGE_NAME)
 
@@ -24,5 +21,6 @@ build-image: Dockerfile
 
 .PHONY: clean
 clean:
-	rm -rf .expo .expo-shared node_modules
+	rm -rf node_modules .expo ios android
+	rm -fv bun.lockb package-lock.json yarn.lock
 	$(RUNTIME) rmi -f $(IMAGE_NAME)
