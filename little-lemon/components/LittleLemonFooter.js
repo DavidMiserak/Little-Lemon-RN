@@ -8,8 +8,8 @@ import {
 const LittleLemonFooter = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.heroText}>
-        All rights reserved by Little Lemon, 2022{' '}
+      <Text style={styles.footerText}>
+        All rights reserved by Little Lemon, {new Date().getFullYear()}
       </Text>
     </View>
   );
@@ -19,12 +19,13 @@ export default LittleLemonFooter;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F4CE14',
+    backgroundColor: '#CBD2D1',
     marginBottom: 10,
   },
-  heroText: {
+  footerText: {
     fontSize: 18,
-    color: 'black',
+    color: '#333333',
     textAlign: 'center',
+    padding: 5,
   },
 });
