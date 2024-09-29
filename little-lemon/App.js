@@ -6,14 +6,14 @@ import {
 
 import LittleLemonHeader from './components/LittleLemonHeader';
 import LittleLemonFooter from './components/LittleLemonFooter';
-import WelcomeScreen from "./screens/WelcomeScreen";
+import OnboardingScreen from "./screens/OnboardingScreen";
 
 const App = () => {
   return (
     <>
       <View style={styles.container}>
         <LittleLemonHeader />
-        <WelcomeScreen />
+        <OnboardingScreen />
       </View>
       <View style={styles.footer}>
         <LittleLemonFooter />
@@ -27,9 +27,9 @@ export default App;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#495E57',
+    backgroundColor: '#DEE3E3',
   },
   footer: {
-    backgroundColor: '#495E57',
+    backgroundColor: '#DEE3E3',
   },
 });
