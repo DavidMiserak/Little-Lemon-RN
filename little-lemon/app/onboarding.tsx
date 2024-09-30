@@ -9,11 +9,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Link } from "expo-router";
 
 const validateEmail = (email: string) => {
   const re = /\S+@\S+\.\S+/;
   return re.test(email);
 };
+
 
 const Onboarding = () => {
   const [firstName, setFirstName] = useState('');
@@ -54,13 +56,14 @@ const Onboarding = () => {
           />
         </View>
         <View style={styles.buttonArea}>
-          <Pressable
-            disabled={!isNameValid || !isEmailValid}
-            style={isNameValid && isEmailValid ? styles.button : styles.buttonDisabled}
-            onPress={() => console.log('Submit')}
-          >
-            <Text style={styles.buttonText}>Next</Text>
-          </Pressable>
+          <Link href={{ pathname: "/profile" }}>
+            <Pressable
+              disabled={!isNameValid || !isEmailValid}
+              style={isNameValid && isEmailValid ? styles.button : styles.buttonDisabled}
+            >
+              <Text style={styles.buttonText}>Next</Text>
+            </Pressable>
+          </Link>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

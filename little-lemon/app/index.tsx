@@ -12,6 +12,9 @@ function Index() {
       <Link href="/onboarding" style={styles.button}>
         Go to Onboarding
       </Link>
+      <Link href="/profile" style={styles.button}>
+        Go to Profile
+      </Link>
     </View>
   );
 }
