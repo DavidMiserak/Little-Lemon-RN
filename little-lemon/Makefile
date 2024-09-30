@@ -12,7 +12,6 @@ run:
 run-container: build-image
 	$(RUNTIME) run -it --rm \
 		-p 8081:8081 \
-		--user $(shell id -u):$(shell id -g) \
 		$(IMAGE_NAME)
 
 .PHONY: build-image
