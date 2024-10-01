@@ -9,19 +9,30 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Link } from "expo-router";
+import { router } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const validateEmail = (email: string) => {
   const re = /\S+@\S+\.\S+/;
   return re.test(email);
 };
 
-
 const Onboarding = () => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [isNameValid, setIsNameValid] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
+
+  const onSubmit = async () => {
+    if (isNameValid && isEmailValid) {
+      try {
+        await AsyncStorage.setItem("user", JSON.stringify({ firstName, email }));
+        router.replace("/profile");
+      } catch (error) {
+        console.error('Failed to save user data', error);
+      }
+    }
+  }
 
   return (
     <KeyboardAvoidingView
@@ -56,14 +67,13 @@ const Onboarding = () => {
           />
         </View>
         <View style={styles.buttonArea}>
-          <Link href={{ pathname: "/profile" }}>
-            <Pressable
-              disabled={!isNameValid || !isEmailValid}
-              style={isNameValid && isEmailValid ? styles.button : styles.buttonDisabled}
-            >
-              <Text style={styles.buttonText}>Next</Text>
-            </Pressable>
-          </Link>
+          <Pressable
+            disabled={!isNameValid || !isEmailValid}
+            style={isNameValid && isEmailValid ? styles.button : styles.buttonDisabled}
+            onPress={onSubmit}
+          >
+            <Text style={styles.buttonText}>Next</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
