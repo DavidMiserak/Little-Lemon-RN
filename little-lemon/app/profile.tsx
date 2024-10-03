@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
-  Button,
   Image,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -10,17 +10,17 @@ import {
   TextInput,
   View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaskedTextInput } from "react-native-mask-text";
 import * as ImagePicker from 'expo-image-picker';
 import { router } from "expo-router";
+import { getUser, EmailNotificationsType, resetUser, setUser, UserType } from "../user";
 
 function Profile() {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [emailNotifications, setEmailNotifications] = useState({
+  const [emailNotifications, setEmailNotifications] = useState<EmailNotificationsType>({
     orderStatuses: true,
     passwordChanges: true,
     specialOffers: true,
@@ -29,24 +29,14 @@ function Profile() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await AsyncStorage.getItem("user");
-        if (user) {
-          const userObj = JSON.parse(user);
-          setFirstName(userObj.firstName);
-          setLastName(userObj.lastName);
-          setEmail(userObj.email);
-          setPhone(userObj.phone);
-          setEmailNotifications(userObj.emailNotifications);
-          setProfileImage(userObj.image);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user data', error);
-      }
-    }
-
-    fetchUser();
+    getUser().then((user) => {
+      setFirstName(user.firstName);
+      setLastName(user.lastName);
+      setEmail(user.email);
+      setPhone(user.phone);
+      setEmailNotifications(user.emailNotifications);
+      setProfileImage(user.image);
+    });
   }, []);
 
   const pickImage = async () => {
@@ -66,50 +56,39 @@ function Profile() {
 
   const saveProfile = async () => {
     try {
-      const user = {
-        firstName,
-        lastName,
-        email,
-        phone,
-        emailNotifications,
-        image: profileImage,
-      };
-      await AsyncStorage.setItem("user", JSON.stringify(user));
+      const user: UserType = await getUser();
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.email = email;
+      user.phone = phone;
+      user.emailNotifications = emailNotifications;
+      user.image = profileImage;
+
+      const firstNameInitial = firstName ? firstName[0] : '';
+      const lastNameInitial = lastName ? lastName[0] : '';
+      user.initials = `${firstNameInitial}${lastNameInitial}`;
+
+      await setUser(user);
+      router.push("/menu");
     } catch (error) {
       console.error('Failed to save user data', error);
     }
   }
 
   const clearProfile = async () => {
-    try {
-      await AsyncStorage.clear();
-      router.replace("/");
-    } catch (error) {
-      console.error('Failed to clear user data', error);
-    }
+    resetUser();
+    router.replace("/");
   }
 
   const resetProfile = async () => {
-    try {
-      const user = await AsyncStorage.getItem("user");
-      if (user) {
-        const { firstName, email } = JSON.parse(user);
-        setFirstName(firstName);
-        setEmail(email);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user data', error);
-    } finally {
-      setProfileImage(null);
-      setLastName('');
-      setPhone('');
-      setEmailNotifications({
-        orderStatuses: true,
-        passwordChanges: true,
-        specialOffers: true,
-        newsletter: true,
-      });
-    }
+    getUser().then((user) => {
+      setFirstName(user.firstName);
+      setLastName(user.lastName);
+      setEmail(user.email);
+      setPhone(user.phone);
+      setEmailNotifications(user.emailNotifications);
+      setProfileImage(user.image);
+    });
   }
 
   return (
@@ -122,17 +101,28 @@ function Profile() {
               source={{ uri: profileImage }}
               style={styles.image}
             />
-          ) : <Text style={[styles.image, styles.placeholder]}>{firstName[0]}{lastName[0]}</Text>
+          ) : (
+            <Text style={[styles.image, styles.placeholder]}>
+              {firstName ? firstName[0] : ''}
+              {lastName ? lastName[0] : ''}
+            </Text>
+          )
           }
-          <Button
-            title="Change"
-            onPress={pickImage}
-          />
-          <Button
-            title="Remove"
-            disabled={!profileImage}
+          <Pressable style={styles.profileButton} onPress={pickImage}>
+            <Text style={styles.profileButtonText}>Change</Text></Pressable>
+          <Pressable
+            style={
+              profileImage
+                ? styles.profileButton
+                : [styles.profileButton, styles.profileButtonDisabled]
+            }
             onPress={() => setProfileImage(null)}
-          />
+            disabled={!profileImage}
+          >
+            <Text style={profileImage ? styles.profileButtonText : styles.profileButtonDisabledText}>
+              Remove
+            </Text>
+          </Pressable>
         </View>
         <View>
           <Text>Fist Name:</Text>
@@ -209,22 +199,25 @@ function Profile() {
             </Text>
           </View>
         </View>
-        <View style={styles.logout}>
-          <Button
-            color="#F4CE14"
-            title="Log Out"
-            onPress={() => clearProfile()}
-          />
-        </View>
+        <Pressable
+          onPress={() => clearProfile()}
+          style={styles.logout}
+        >
+          <Text style={styles.logoutText}>Log Out</Text>
+        </Pressable>
         <View style={styles.changeArea}>
-          <Button
-            title="Discard Changes"
+          <Pressable
+            style={styles.discardButton}
             onPress={() => resetProfile()}
-          />
-          <Button
-            title="Save Changes"
+          >
+            <Text style={styles.discardButtonText}>Discard Changes</Text>
+          </Pressable>
+          <Pressable
+            style={styles.saveButton}
             onPress={() => saveProfile()}
-          />
+          >
+            <Text style={styles.saveButtonText}>Save Changes</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -245,7 +238,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   textFields: {
-    width: 200,
     height: 40,
     margin: 15,
     padding: 10,
@@ -274,15 +266,61 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 20,
     alignItems: "center",
-    paddingBottom: 20,
+    paddingVertical: 30,
+  },
+  profileButton: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "#F4CE14",
+  },
+  profileButtonDisabled: {
+    backgroundColor: "lightgray",
+    borderStyle: "dashed",
+    borderWidth: 1,
+  },
+  profileButtonText: {
+    color: "#333333",
+    fontWeight: "bold",
+  },
+  profileButtonDisabledText: {
+    color: "gray",
+    fontWeight: "bold",
   },
   logout: {
-    padding: 20,
+    padding: 10,
+    margin: 20,
+    borderRadius: 25,
+    alignItems: "center",
+    backgroundColor: "#F4CE14",
+  },
+  logoutText: {
+    color: "#333333",
+    fontWeight: "bold",
   },
   changeArea: {
     flexDirection: "row",
     gap: 20,
     alignItems: "center",
     padding: 20,
+  },
+  saveButton: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "#495E57",
+  },
+  saveButtonText: {
+    color: "#EDEFEE",
+    fontWeight: "bold",
+  },
+  discardButton: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "lightgray",
+    borderWidth: 2,
+    borderColor: "gray",
+  },
+  discardButtonText: {
+    color: "#333333",
+    fontWeight: "bold",
   },
 });

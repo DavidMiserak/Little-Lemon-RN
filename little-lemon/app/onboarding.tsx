@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,7 +10,11 @@ import {
   View,
 } from 'react-native';
 import { router } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  getUser,
+  setUser,
+  UserType,
+} from '../user';
 
 const validateEmail = (email: string) => {
   const re = /\S+@\S+\.\S+/;
@@ -23,11 +27,25 @@ const Onboarding = () => {
   const [isNameValid, setIsNameValid] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
 
+  useEffect(() => {
+    getUser().then((user) => {
+      setFirstName(user.firstName);
+      setEmail(user.email);
+
+      setIsNameValid(user.firstName.length > 0);
+      setIsEmailValid(validateEmail(user.email));
+    });
+  }, []);
+
   const onSubmit = async () => {
     if (isNameValid && isEmailValid) {
       try {
-        await AsyncStorage.setItem("user", JSON.stringify({ firstName, email }));
-        router.replace("/profile");
+        const user: UserType = await getUser();
+        user.firstName = firstName;
+        user.email = email;
+        user.initials = firstName[0].toUpperCase();
+        await setUser(user);
+        router.push("/profile");
       } catch (error) {
         console.error('Failed to save user data', error);
       }

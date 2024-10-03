@@ -1,33 +1,26 @@
 import { useState, useEffect } from "react";
-import { Redirect } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Redirect, router } from "expo-router";
+import { getUser } from "../user";
 
 
 function Index() {
-  const [firstName, setFirstName] = useState('');
-  const [email, setEmail] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await AsyncStorage.getItem("user");
-        if (user) {
-          const { firstName, email } = JSON.parse(user);
-          setFirstName(firstName);
-          setEmail(email);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user data', error);
-      }
-    }
+    getUser().then((user) => {
+      const hasFirstName = user.firstName.length > 0;
+      const hasEmail = user.email.length > 0;
 
-    fetchUser();
+      if (hasFirstName && hasEmail) {
+        setIsLoggedIn(true);
+        router.push("/menu");
+      }
+    });
   }, []);
 
+
   return (
-    email && firstName
-      ? <Redirect href="/profile" />
-      : <Redirect href="/onboarding" />
+    !isLoggedIn ? <Redirect href="/onboarding" /> : <Redirect href="/menu" />
   );
 }
 
