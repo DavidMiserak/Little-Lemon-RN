@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 
-const Filters = ({ sections }: any) => {
+const Filters = ({ onChange, sections, selections }: any) => {
   return (
     <View style={styles.filterArea}>
       <ScrollView
@@ -14,12 +14,24 @@ const Filters = ({ sections }: any) => {
         horizontal={true}
         contentContainerStyle={{ flexGrow: 1 }}
       >
-        {sections.map((category: any) => (
+        {sections.map((category: any, index: any) => (
           <Pressable
-            key={category}
-            style={styles.filterButton}
+            key={index}
+            onPress={() => onChange(index)}
+            style={
+              selections[index]
+                ? [styles.filterButton, styles.selectedFilterButton]
+                : styles.filterButton
+            }
           >
-            <Text style={styles.filterButtonText}>{category}</Text>
+            <Text
+              style={
+                selections[index]
+                  ? [styles.filterButtonText, styles.selectedFilterButtonText]
+                  : styles.filterButtonText
+              }
+            >
+              {category}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -32,7 +44,7 @@ const styles = StyleSheet.create({
   filterArea: {
     flexDirection: 'row',
     gap: 10,
-    padding: 20,
+    padding: 5,
   },
   filterButton: {
     backgroundColor: 'lightgray',
@@ -46,5 +58,11 @@ const styles = StyleSheet.create({
   filterButtonText: {
     color: '#495E57',
     fontWeight: 'bold',
+  },
+  selectedFilterButton: {
+    backgroundColor: '#495E57',
+  },
+  selectedFilterButtonText: {
+    color: '#EDEFEE',
   },
 });

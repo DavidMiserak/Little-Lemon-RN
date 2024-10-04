@@ -1,19 +1,29 @@
-import { useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Image,
   FlatList,
-  Pressable,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { getImageUrl, getMenuItems, getCategories } from '../database';
-import heroImage from '../assets/images/hero-image.png';
+import { Searchbar } from 'react-native-paper';
+import debounce from 'lodash.debounce';
+import {
+  getImageUrl,
+  getCategories,
+  filterByQueryAndCategories,
+} from '../database';
 import Filters from '../components/Filters';
 
-const Item = ({ name, description, price, image }: any) => {
+const Item = ({ name, description, price, image }) => {
+  const imageURL = getImageUrl(image);
+
   return (
     <View style={styles.item}>
       <View>
@@ -21,41 +31,79 @@ const Item = ({ name, description, price, image }: any) => {
         <Text style={styles.itemText}>{description}</Text>
         <Text style={styles.itemPrice}>${price} USD</Text>
       </View>
-      <Image
-        style={styles.itemImage}
-        alt={name}
-        source={{ uri: getImageUrl(image) }}
-        resizeMode="contain"
-      />
+      <View>
+        <Image
+          style={styles.itemImage}
+          alt={name}
+          source={{ uri: imageURL }}
+          resizeMode="contain"
+        />
+      </View>
     </View>
   );
 };
 
+
 const MenuPage = () => {
   const [data, setData] = useState([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>(["mains", "starters", "desserts"]);
+  const [filterSelections, setFilterSelections] = useState<boolean[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   useEffect(() => {
-    const menuItems = getMenuItems();
-    menuItems.then((data) => {
-      setData(data);
-    });
-
+    // Fetch categories
     const uniqueCategories = getCategories();
     uniqueCategories.then((data) => {
       setCategories(data);
+      if (categories.length !== filterSelections.length) {
+        setFilterSelections(new Array(data.length).fill(false));
+      }
     });
-  }, []);
+
+    const filterQuery = filterSelections.map((selected, index) => {
+      return selected ? categories[index] : '';
+    });
+
+    const tempActiveCategories = filterQuery.filter((category) => category !== '');
+
+    let activeCategories = categories;
+    activeCategories = tempActiveCategories.length > 0 ? tempActiveCategories : categories;
+
+    // Fetch menu items
+    const menuItems = filterByQueryAndCategories(searchQuery, activeCategories);
+    menuItems.then((data: any) => {
+      setData(data);
+    });
+
+  }, [filterSelections, searchQuery]);
 
   const renderItem = ({ item }: any) => (
     <Item
-      key={item.name}
+      key={item.id}
       name={item.name}
       description={item.description}
       price={item.price}
       image={item.image}
     />
   );
+
+  const handleFilterChange = async (index: number) => {
+    const newSelections = [...filterSelections];
+    newSelections[index] = !newSelections[index];
+    setFilterSelections(newSelections);
+  };
+
+  const lookup = useCallback((q: any) => {
+    setSearchQuery(q);
+  }, []);
+
+  const debouncedLookup = useMemo(() => debounce(lookup, 500), [lookup]);
+
+  const handleSearchChange = (text: any) => {
+    setDebouncedSearchQuery(text);
+    debouncedLookup(text);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -72,7 +120,7 @@ const MenuPage = () => {
           <Image
             style={styles.heroImage}
             alt="Little Lemon Restaurant"
-            source={heroImage}
+            source={require('../assets/images/hero-image.png')}
             resizeMode="contain"
           />
         </View>
@@ -80,7 +128,16 @@ const MenuPage = () => {
       <View>
         <Text style={styles.menuHeader}>Order for Delivery</Text>
       </View>
-      <Filters sections={categories} />
+      <Searchbar
+        placeholder="Search"
+        onChangeText={handleSearchChange}
+        value={debouncedSearchQuery}
+      />
+      <Filters
+        selections={filterSelections}
+        sections={categories}
+        onChange={handleFilterChange}
+      />
       <FlatList
         data={data}
         renderItem={renderItem}
